@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>For Shari — Happy Mother's Day</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=Lora:ital@1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background: #c5ddf0;
+  font-family: 'Lora', Georgia, serif;
+  overflow-x: hidden;
+}
+
+/* ── VIDEO SCREEN ── */
+#videoScreen {
+  position: fixed; inset: 0;
+  background: #000;
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 1.2s ease;
+}
+#videoScreen.out { opacity: 0; pointer-events: none; }
+
+#videoEl {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#skipBtn {
+  position: absolute; bottom: 2rem; right: 1.5rem;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: white; font-family: sans-serif;
+  font-size: 12px; letter-spacing: 0.08em;
+  padding: 7px 16px; border-radius: 20px;
+  cursor: pointer; backdrop-filter: blur(4px);
+  opacity: 0; transition: opacity 0.6s 1s;
+}
+#skipBtn.show { opacity: 1; }
+
+#unmuteBtn {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: white;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  padding: 18px 28px; border-radius: 20px;
+  cursor: pointer; backdrop-filter: blur(6px);
+  opacity: 0; transition: opacity 0.8s 0.5s;
+  z-index: 10;
+}
+#unmuteBtn.show { opacity: 1; }
+#unmuteBtn.hide { opacity: 0; pointer-events: none; }
+
+/* ── INTRO ── */
+#intro {
+  position: fixed; inset: 0;
+  background: linear-gradient(160deg, #d8ecf8 0%, #c2d8ec 60%, #b8d0e8 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 100; padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: opacity 1.4s ease;
+}
+#intro.out { opacity: 0; pointer-events: none; }
+
+#introBudWrap {
+  margin-bottom: 2rem;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 1s, transform 1s;
+}
+#introBudWrap.show { opacity: 1; transform: translateY(0); }
+
+#introText {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(17px, 4.5vw, 22px);
+  color: #2a3a4a; text-align: center;
+  line-height: 1.9; max-width: 320px;
+  opacity: 0; transform: translateY(14px);
+  transition: opacity 1s 0.3s, transform 1s 0.3s;
+}
+#introText.show { opacity: 1; transform: translateY(0); }
+
+#introHint {
+  margin-top: 2rem; font-size: 11px; letter-spacing: 0.12em;
+  color: #4a6a7a; font-family: sans-serif; text-transform: uppercase;
+  opacity: 0; transition: opacity 1s 0.9s;
+}
+#introHint.show { opacity: 1; }
+
+/* ── MAIN ── */
+#main {
+  display: none; flex-direction: column;
+  align-items: center; padding: 2rem 1rem 3rem;
+  min-height: 100vh;
+}
+#main.show { display: flex; }
+
+/* ── STAGE ── */
+#stage {
+  position: relative;
+  width: min(94vw, 420px);
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 1.2s ease;
+}
+
+#tapHint {
+  font-size: 12px; letter-spacing: 0.07em;
+  color: #4a6a7a; font-family: sans-serif;
+  margin-bottom: 14px; text-align: center; min-height: 18px;
+  transition: opacity 0.6s;
+}
+
+/* ── ROSE CANVAS (perspective view) ── */
+#roseCanvas {
+  width: min(94vw, 420px);
+  height: min(94vw, 420px);
+  display: block;
+  touch-action: none;
+}
+
+/* ── CARDS ── */
+#cards {
+  width: min(92vw, 400px);
+  margin: 1.6rem auto 0;
+  display: flex; flex-direction: column; gap: 14px;
+  transition: opacity 1.2s ease;
+}
+.card {
+  background: rgba(255,255,255,0.72);
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(80,100,130,0.13);
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 0.7s, transform 0.7s;
+}
+.card.show { opacity: 1; transform: translateY(0); }
+.card-photo {
+  width: 100%; aspect-ratio: 4/3;
+  background: linear-gradient(135deg, #ead4dc 0%, #d4bcc8 100%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ph-icon { font-size: 36px; opacity: 0.45; }
+.ph-label { font-size: 11px; color: #8a6878; font-family: sans-serif; letter-spacing: 0.05em; }
+.card-num {
+  position: absolute; top: 10px; left: 12px;
+  background: rgba(255,255,255,0.72);
+  border-radius: 20px; padding: 3px 11px;
+  font-size: 11px; color: #5a6a7a; font-family: sans-serif;
+}
+.card-body { padding: 14px 18px 18px; }
+.card-msg {
+  font-family: 'Lora', Georgia, serif;
+  font-style: italic; font-size: 14px;
+  color: #2a3040; line-height: 1.7;
+}
+
+/* ── FINAL OVERLAY ── */
+#finalOverlay {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #d8ecf8 0%, #c2d8ec 60%, #b8cfe8 100%);
+  z-index: 50; padding: 2rem;
+  opacity: 0; pointer-events: none;
+  transition: opacity 1.6s ease;
+}
+#finalOverlay.show { opacity: 1; pointer-events: all; }
+
+#happyMD {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(22px, 5.5vw, 30px);
+  color: #b05880; text-align: center; letter-spacing: 0.04em;
+  opacity: 0; transform: translateY(-14px);
+  transition: opacity 1.2s 0.5s, transform 1.2s 0.5s;
+}
+#happyMD.show { opacity: 1; transform: translateY(0); }
+
+#finalCanvas {
+  width: min(80vw, 320px);
+  height: min(80vw, 320px);
+  display: block; margin: 1.4rem 0;
+}
+
+#finalMsg {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(15px, 3.8vw, 18px);
+  color: #2a3a4a; text-align: center;
+  line-height: 1.9; max-width: 300px;
+  opacity: 0; transform: translateY(14px);
+  transition: opacity 1.2s 0.9s, transform 1.2s 0.9s;
+}
+#finalMsg.show { opacity: 1; transform: translateY(0); }
+
+/* ── PARTICLES ── */
+#particles { position: fixed; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }
+.pt {
+  position: absolute; font-size: 24px; pointer-events: none;
+  animation: ptUp 1.8s ease-out forwards;
+}
+@keyframes ptUp {
+  0%   { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(-120px) scale(0.15) rotate(20deg); }
+}
+</style>
+</head>
+<body>
+<div id="particles"></div>
+
+<!-- VIDEO SCREEN -->
+<div id="videoScreen">
+  <video id="videoEl" src="video.mp4" autoplay playsinline muted></video>
+  <audio id="bgMusic" src="perfect.mp3" loop></audio>
+  <div id="unmuteBtn" onclick="startMusic()">
+    <span style="font-size:22px;">🔊</span>
+    <span style="font-size:12px;letter-spacing:0.08em;font-family:sans-serif;">tap for music</span>
+  </div>
+  <button id="skipBtn" onclick="endVideo()">skip</button>
+</div>
+
+<!-- INTRO -->
+<div id="intro" onclick="beginExp()">
+  <div id="introBudWrap">
+    <!-- Hand-drawn bud SVG -->
+    <svg width="90" height="130" viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">
+      <!-- stem -->
+      <path d="M45 120 Q43 105 45 88" stroke="#6a9a68" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <!-- leaves -->
+      <path d="M45 108 Q28 100 22 88 Q35 89 45 102Z" fill="#7aaa78" opacity="0.9"/>
+      <path d="M45 108 Q62 100 68 88 Q55 89 45 102Z" fill="#5a8a58" opacity="0.9"/>
+      <!-- sepal cups -->
+      <path d="M35 88 Q33 76 45 70 Q57 76 55 88 Q50 82 45 81 Q40 82 35 88Z" fill="#6a9a68"/>
+      <path d="M45 78 Q38 72 36 62 Q44 66 45 74Z" fill="#7aaa78" opacity="0.7"/>
+      <path d="M45 78 Q52 72 54 62 Q46 66 45 74Z" fill="#5a8a58" opacity="0.7"/>
+      <!-- bud body — round and full -->
+      <ellipse cx="45" cy="50" rx="18" ry="26" fill="#f0c0cc"/>
+      <!-- outer left petal wrap -->
+      <path d="M45 26 Q24 34 24 58 Q28 44 38 40 Q42 34 45 28Z" fill="#d880a4" opacity="0.88"/>
+      <!-- outer right petal wrap -->
+      <path d="M45 26 Q66 34 66 58 Q62 44 52 40 Q48 34 45 28Z" fill="#c06890" opacity="0.88"/>
+      <!-- inner left petal -->
+      <path d="M45 28 Q33 36 33 56 Q37 44 43 40Z" fill="#f0b8cc" opacity="0.82"/>
+      <!-- inner right petal -->
+      <path d="M45 28 Q57 36 57 56 Q53 44 47 40Z" fill="#e8a8bc" opacity="0.82"/>
+      <!-- center highlight -->
+      <ellipse cx="45" cy="42" rx="6" ry="10" fill="#fce4ee" opacity="0.6"/>
+    </svg>
+  </div>
+  <p id="introText">You've been my sunlight, my water, my roots. 18 years later, I'm finally blooming and it's all because of you.</p>
+  <p id="introHint">tap to begin</p>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="stage" onclick="handleTap()">
+    <div id="tapHint">tap the flower to begin blooming</div>
+    <canvas id="roseCanvas"></canvas>
+  </div>
+  <div id="cards"></div>
+</div>
+
+<!-- FINAL OVERLAY -->
+<div id="finalOverlay">
+  <p id="happyMD">Happy Mother's Day, Mommy 🌸</p>
+  <canvas id="finalCanvas"></canvas>
+  <p id="finalMsg">18 years of your love grew me into who I am. I love you more than any flower could hold.</p>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const MESSAGES = [
+  "On this day October 15, 2008 the story of my life began. I don't know much about this day but I do know that you were there for all of it. Before I even knew what life was I knew my mom was here for me.",
+  "At one years old I met Jamaica, the island that everyone in my family loves so much. What my family didn't know was that I'd spend the next few years only eating yankee food. But my current love for Jamaican food was thanks to the afternoons after school in the restaurant you built.",
+  "Five years old, arms wide open, smiling so hard you couldn't even see my eyes. Looking at this photo I see a happy little girl on her birthday and I think that's because of you.",
+  "Even at four years old I had a taste for the finer things at restaurants. You guys didn't call me 'high chest' for no reason. But no restaurant ever felt special because of the food. It was always because my mom was sitting with me.",
+  "Six years old and already eating outside in a tiara like the princess you convinced me I was.",
+  "Five years old, pink crocs, on a horse on a Caribbean beach like I owned the place. You walked beside me the whole time making sure I didn't fall. To this day I appreciate you letting me have my adventures while never letting me go.",
+  "Still on that trip, still in the pink crocs, with my shirt saying exactly what you thought about me — a princess. Every trip, every moment, every little thing you did told me I was worth celebrating. I believed it because you instilled that in me first.",
+  "Dressed up on a warm summer night, both of us with our hands on our hips like we rehearsed it. Looking at this I can see where I get it from. You've always shown me how to show out for family, for the people you love, and for the moment that we're in.",
+  "Eight years old, the whole New York City skyline behind us, golden light everywhere. I didn't know it then but these are the moments I'd look back on and realize how full my childhood was. You have given me a life worth remembering.",
+  "You showed up for every birthday no matter what we were doing or where we were. Nine years of never missing me.",
+  "My first graduation. White gown, purple braids, diploma in hand and you right there beside me like you always are. Every single thing I have ever accomplished started with you believing I could do it first.",
+  "The party after the graduation. A tropical backdrop in the basement in Brooklyn, and balloons everywhere. When it came to celebrating me everyone showed up. You made sure of that.",
+  "Matching Christmas onesies at grandma's house became a tradition. I was deep in my 'I hate photos' era thanks to puberty but you smiled enough for both of us like you always have. Looking back now I'm glad you dragged me in front of the camera anyway or I wouldn't have enough photos for this gift 😂",
+  "Back at grandma's house in Florida, back in matching outfits, Merry and Bright. Someone definitely told me to smile for this one. Some things about me have changed over the years but showing up for Christmas with you never will.",
+  "High school graduation. Blue cap, decorated gown, I didn't just finish, I worked for it every single day after school. You always told me I was capable of more than I thought. Every late afternoon doing tech, every challenge I figured out on my own, I did it knowing you were my biggest supporter.",
+  "On my Sweet Sixteen you worked so hard to put together the party you knew I deserved. A gold throne, a crown, and you right beside me like you have been for every single milestone. I've come a long way from pink crocs. Thank you for making sure I always knew I deserved to be celebrated.",
+  "The night after you moved me into my dorm. We went to dinner like we always do, but this time was so different. I was stepping into my own life and you were still right there beside me. This is the last petal before I bloom. You didn't just raise me, you prepared me for this moment. Thank you for not letting go until I was ready to fly.",
+];
+// Replace null with image paths like "photos/photo1.jpg"
+const PHOTO_POSITIONS = [
+  "top",    // petal 1
+  "top",    // petal 2
+  "center", // petal 3
+  "center", // petal 4
+  "center", // petal 5
+  "top",    // petal 6
+  "top",    // petal 7
+  "top",    // petal 8
+  "center", // petal 9
+  "center", // petal 10
+  "center", // petal 11
+  "top",    // petal 12
+  "center", // petal 13
+  "center", // petal 14
+  "center", // petal 15
+  "center", // petal 16
+  "center", // petal 17
+];
+const PHOTOS = [
+  "photos/photo1.jpg",
+  "photos/photo2.jpg",
+  "photos/photo3.jpg",
+  "photos/photo4.jpg",
+  "photos/photo5.jpg",
+  "photos/photo6.jpg",
+  "photos/photo7.jpg",
+  "photos/photo8.jpg",
+  "photos/photo9.jpg",
+  "photos/photo10.jpg",
+  "photos/photo11.jpg",
+  "photos/photo12.jpg",
+  "photos/photo13.jpg",
+  "photos/photo14.jpg",
+  "photos/photo16.jpg",
+  "photos/photo15.jpg",
+  "photos/photo17.jpg",
+];
+const SPARKS = ['🌸','💕','✨','🌷','💗','🍃','🌺','🫧','🌼'];
+const TOTAL = 18;
+
+// ── PETAL SEQUENCE ────────────────────────────────────────────────────
+// Rose blooms from outside in. We define petals as layers.
+// Each petal: { angle (around stem, degrees), layer (0=outermost), openAngle (how far it drops) }
+// Side view: petals are ellipses that "fold down" as they open.
+// We use a perspective projection to simulate a 3D rose.
+
+// 18 petals arranged in 4 layers:
+// Layer 0: 7 petals  (outermost, open first, droop almost flat)
+// Layer 1: 6 petals  (middle, open second)
+// Layer 2: 4 petals  (inner, open third)
+// Layer 3: 1 petal   (innermost, opens last → triggers finale)
+
+function buildPetalDefs() {
+  const defs = [];
+  const layers = [
+    { count: 7, maxDroop: 110, petalLen: 88, petalW: 44, colorBase: [242,180,210] },
+    { count: 6, maxDroop: 80,  petalLen: 70, petalW: 36, colorBase: [228,158,195] },
+    { count: 4, maxDroop: 55,  petalLen: 54, petalW: 30, colorBase: [215,138,178] },
+    { count: 1, maxDroop: 35,  petalLen: 38, petalW: 26, colorBase: [200,120,162] },
+  ];
+  let id = 0;
+  layers.forEach((layer, li) => {
+    const angleStep = 360 / layer.count;
+    const offset = li * 25; // rotate each layer slightly
+    for (let i = 0; i < layer.count; i++) {
+      defs.push({
+        id: id++,
+        layer: li,
+        rotationAngle: offset + angleStep * i, // around vertical axis (azimuth)
+        maxDroop: layer.maxDroop,
+        petalLen: layer.petalLen,
+        petalW: layer.petalW,
+        colorBase: layer.colorBase,
+        progress: 0, // 0 = closed, 1 = fully open
+        opened: false,
+        animating: false,
+      });
+    }
+  });
+  return defs;
+}
+
+const petals = buildPetalDefs();
+let nextPetalIdx = 0; // which petal opens next
+let isAnimating = false;
+let bloomed = false;
+let glowPhase = 0;
+
+// ── CANVAS ────────────────────────────────────────────────────────────
+const canvas = document.getElementById('roseCanvas');
+const ctx = canvas.getContext('2d');
+let CW, CH, CX, CY;
+
+function resizeCanvas() {
+  const size = Math.min(window.innerWidth * 0.94, 420);
+  CW = size; CH = size;
+  canvas.width  = CW * devicePixelRatio;
+  canvas.height = CH * devicePixelRatio;
+  canvas.style.width  = CW + 'px';
+  canvas.style.height = CH + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  CX = CW / 2;
+  CY = CH / 2 + CH * 0.08; // slightly below center for better composition
+}
+
+window.addEventListener('resize', () => { resizeCanvas(); drawRose(ctx, CW, CH, false); });
+
+// ── DRAWING ───────────────────────────────────────────────────────────
+// We draw a rose from a 3/4 side angle.
+// Each petal is an ellipse projected in perspective.
+// "droop" = how far the petal has opened (0=straight up, maxDroop=flat out)
+// We sort petals by their projected Y so back petals draw first.
+
+function petalColor(p, highlight) {
+  const [r, g, b] = p.colorBase;
+  const bright = highlight ? 1.12 : 1.0;
+  const dr = Math.min(255, Math.round(r * bright));
+  const dg = Math.min(255, Math.round(g * bright));
+  const db = Math.min(255, Math.round(b * bright));
+  return { fill: `rgb(${dr},${dg},${db})`, dark: `rgb(${Math.round(r*0.7)},${Math.round(g*0.7)},${Math.round(b*0.7)})` };
+}
+
+function drawPetal(c, p, scale, cx, cy, glowing) {
+  // Azimuth: rotation around vertical axis
+  const azRad = p.rotationAngle * Math.PI / 180;
+  // Droop angle: how far petal has opened (0=vertical/closed, maxDroop=open)
+  const droopDeg = p.progress * p.maxDroop;
+  const droopRad = droopDeg * Math.PI / 180;
+
+  // Perspective: slight tilt so we see from ~30° above
+  const viewTilt = 30 * Math.PI / 180;
+
+  // Petal tip position in 3D (petal grows from center, along its droop direction)
+  // In local petal frame: petal points "out" by petalLen, drooped by droopRad
+  const localX = Math.sin(droopRad) * p.petalLen;
+  const localY = -Math.cos(droopRad) * p.petalLen; // -Y = up in 3D
+
+  // Rotate around vertical axis (azimuth)
+  const worldX = Math.cos(azRad) * localX;
+  const worldZ = Math.sin(azRad) * localX;
+  const worldY = localY;
+
+  // Project to screen with perspective tilt
+  const screenX = worldX * Math.cos(0) - worldZ * Math.sin(0); // no yaw
+  const screenY3D = worldY * Math.cos(viewTilt) - worldZ * Math.sin(viewTilt);
+  const depth = worldY * Math.sin(viewTilt) + worldZ * Math.cos(viewTilt);
+
+  // Petal shape: ellipse with perspective squeeze
+  // Width tapers as petal stands more vertical (closed)
+  const openness = p.progress;
+  // Closed petals start with real width — no stick look
+  const hw = p.petalW * (0.52 + 0.48 * openness) * scale;
+
+  const baseX = cx;
+  const baseY = cy - 2 * scale;
+  const col = petalColor(p, false);
+
+  c.save();
+  c.translate(baseX, baseY);
+  c.rotate(azRad - Math.PI / 2);
+
+  const len = p.petalLen * scale;
+  const w   = hw;
+
+  // Round petal: wide belly ~55% up, soft rounded tip
+  const belly = 0.78 + 0.18 * openness;
+  const tipW  = 0.14; // how wide the rounded tip is
+
+  const grad = c.createLinearGradient(0, 0, 0, -len);
+  grad.addColorStop(0,    col.dark);
+  grad.addColorStop(0.12, col.fill);
+  grad.addColorStop(0.65, '#fce8ef');
+  grad.addColorStop(1,    '#fff4f8');
+
+  c.beginPath();
+  c.moveTo(0, 0);
+  // Right side up to tip
+  c.bezierCurveTo(w * 0.55, -len * 0.18, w * belly, -len * 0.52, w * tipW, -len * 0.97);
+  // Round tip
+  c.bezierCurveTo(w * tipW * 0.4, -len * 1.03, -w * tipW * 0.4, -len * 1.03, -w * tipW, -len * 0.97);
+  // Left side back down
+  c.bezierCurveTo(-w * belly, -len * 0.52, -w * 0.55, -len * 0.18, 0, 0);
+  c.closePath();
+
+  // Droop skew for side-view bloom effect
+  c.transform(1, 0, Math.sin(droopRad) * Math.cos(azRad) * 0.4, Math.cos(droopRad * 0.8), 0, 0);
+
+  c.fillStyle = grad;
+  c.fill();
+  c.strokeStyle = col.dark;
+  c.lineWidth = 0.9 * scale;
+  c.globalAlpha = 0.6;
+  c.stroke();
+  c.globalAlpha = 1;
+
+  // Center vein
+  c.beginPath();
+  c.moveTo(0, -4 * scale);
+  c.lineTo(0, -len * 0.7);
+  c.strokeStyle = col.dark;
+  c.lineWidth = 0.6 * scale;
+  c.globalAlpha = 0.35;
+  c.stroke();
+  c.globalAlpha = 1;
+
+  c.restore();
+}
+
+function drawStem(c, cx, cy, scale) {
+  const stemTop = cy + 10 * scale;
+  const stemBot = cy + 90 * scale;
+  c.save();
+  // Stem
+  c.beginPath();
+  c.moveTo(cx, stemTop);
+  c.bezierCurveTo(cx - 4*scale, stemTop + 20*scale, cx + 3*scale, stemBot - 20*scale, cx, stemBot);
+  c.strokeStyle = '#6a9a68';
+  c.lineWidth = 4 * scale;
+  c.lineCap = 'round';
+  c.stroke();
+
+  // Leaves
+  c.beginPath();
+  c.moveTo(cx, stemTop + 35*scale);
+  c.bezierCurveTo(cx - 30*scale, stemTop + 28*scale, cx - 38*scale, stemTop + 50*scale, cx - 18*scale, stemTop + 55*scale);
+  c.bezierCurveTo(cx - 8*scale, stemTop + 50*scale, cx, stemTop + 42*scale, cx, stemTop + 35*scale);
+  c.fillStyle = '#7aaa78';
+  c.fill();
+
+  c.beginPath();
+  c.moveTo(cx, stemTop + 50*scale);
+  c.bezierCurveTo(cx + 28*scale, stemTop + 42*scale, cx + 36*scale, stemTop + 62*scale, cx + 16*scale, stemTop + 68*scale);
+  c.bezierCurveTo(cx + 6*scale, stemTop + 63*scale, cx, stemTop + 56*scale, cx, stemTop + 50*scale);
+  c.fillStyle = '#5a8a58';
+  c.fill();
+  c.restore();
+}
+
+function drawSepal(c, cx, cy, scale) {
+  const cols = ['#6a9a68','#5a8a58','#78b076','#4a7a48','#6a9a68'];
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    c.save();
+    c.translate(cx, cy);
+    c.rotate(a);
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.bezierCurveTo(6*scale, -8*scale, 4*scale, -22*scale, 0, -26*scale);
+    c.bezierCurveTo(-4*scale, -22*scale, -6*scale, -8*scale, 0, 0);
+    c.fillStyle = cols[i];
+    c.fill();
+    c.restore();
+  }
+}
+
+function drawCenter(c, cx, cy, scale, glowAmt) {
+  if (glowAmt > 0) {
+    const gr = c.createRadialGradient(cx, cy, 0, cx, cy, 80 * scale);
+    gr.addColorStop(0, `rgba(255,220,160,${0.55 * glowAmt})`);
+    gr.addColorStop(0.5, `rgba(255,200,140,${0.25 * glowAmt})`);
+    gr.addColorStop(1, 'rgba(255,200,140,0)');
+    c.beginPath();
+    c.arc(cx, cy, 80 * scale, 0, Math.PI * 2);
+    c.fillStyle = gr;
+    c.fill();
+  }
+
+  const r = (14 + glowAmt * 4) * scale;
+  const cg = c.createRadialGradient(cx, cy - r*0.3, r*0.1, cx, cy, r);
+  cg.addColorStop(0, '#fffacc');
+  cg.addColorStop(0.5, '#f5c060');
+  cg.addColorStop(1, '#d4849e');
+  c.beginPath();
+  c.arc(cx, cy, r, 0, Math.PI * 2);
+  c.fillStyle = cg;
+  c.fill();
+  c.strokeStyle = '#b06080';
+  c.lineWidth = 1.2 * scale;
+  c.stroke();
+}
+
+function drawRose(c, cw, ch, isFinal) {
+  const scale = cw / 420;
+  const cx = cw / 2;
+  const cy = isFinal ? ch / 2 + ch * 0.05 : CY;
+  const glowAmt = isFinal ? glowPhase : (bloomed ? glowPhase : 0);
+
+  c.clearRect(0, 0, cw, ch);
+  drawStem(c, cx, cy, scale);
+  drawSepal(c, cx, cy, scale);
+
+  // Sort petals: back-to-front by their screen depth
+  const sorted = [...petals].sort((a, b) => {
+    const depthA = Math.sin(a.rotationAngle * Math.PI / 180);
+    const depthB = Math.sin(b.rotationAngle * Math.PI / 180);
+    return depthB - depthA;
+  });
+
+  for (const p of sorted) {
+    drawPetal(c, p, scale, cx, cy, glowAmt);
+  }
+
+  drawCenter(c, cx, cy, scale, glowAmt);
+}
+
+// ── INTERACTION ───────────────────────────────────────────────────────
+function handleTap() {
+  if (isAnimating || bloomed) return;
+  if (nextPetalIdx >= TOTAL) return;
+
+  const p = petals[nextPetalIdx];
+  nextPetalIdx++;
+  isAnimating = true;
+
+  // Burst from canvas center
+  const rect = canvas.getBoundingClientRect();
+  burst(rect.left + rect.width / 2, rect.top + rect.height * 0.4);
+
+  const t0 = performance.now();
+  const dur = 900;
+
+  (function frame(now) {
+    const raw = Math.min((now - t0) / dur, 1);
+    const ease = 1 - Math.pow(1 - raw, 3);
+    p.progress = ease;
+    drawRose(ctx, CW, CH, false);
+
+    if (raw < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      p.progress = 1;
+      p.opened = true;
+      isAnimating = false;
+
+      // Add card for petals 1-17
+      if (p.id < MESSAGES.length) {
+        addCard(p);
+      }
+
+      updateHint();
+
+      // Last petal — trigger finale
+      if (nextPetalIdx === TOTAL) {
+        triggerFinalBloom();
+      }
+    }
+  })(t0);
+}
+
+function updateHint() {
+  const h = document.getElementById('tapHint');
+  const n = nextPetalIdx;
+  if (n === 0) h.textContent = 'tap the flower to begin blooming';
+  else if (n < TOTAL) h.textContent = `${n} of ${TOTAL} petals opened — tap to continue`;
+  else h.textContent = 'fully bloomed 🌸';
+}
+
+// ── CARDS ─────────────────────────────────────────────────────────────
+function addCard(p) {
+  const wrap = document.getElementById('cards');
+  const card = document.createElement('div');
+  card.className = 'card';
+  const src = PHOTOS[p.id];
+  card.innerHTML = `
+    <div class="card-photo">
+      ${src
+        ? `<img src="${src}" alt="Memory ${p.id+1}" loading="lazy" style="object-position: ${PHOTO_POSITIONS[p.id]};">`
+        : `<div class="ph"><span class="ph-icon">📷</span><span class="ph-label">photo ${p.id+1} of 17</span></div>`
+      }
+      <span class="card-num">petal ${p.id+1} of 17</span>
+    </div>
+    <div class="card-body"><p class="card-msg">${MESSAGES[p.id]}</p></div>
+  `;
+  wrap.insertBefore(card, wrap.firstChild);
+  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('show')));
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+// ── FINAL BLOOM ───────────────────────────────────────────────────────
+function triggerFinalBloom() {
+  bloomed = true;
+
+  // Big burst
+  const rect = canvas.getBoundingClientRect();
+  for (let i = 0; i < 18; i++) {
+    setTimeout(() => {
+      burst(
+        rect.left + rect.width  / 2 + (Math.random() - 0.5) * 220,
+        rect.top  + rect.height * 0.4 + (Math.random() - 0.5) * 180
+      );
+    }, i * 110);
+  }
+
+  // Glow the main rose for 1.5s, then fade to final screen
+  let gt = 0;
+  const glowIn = performance.now();
+  const glowDur = 1500;
+
+  (function glowUp(now) {
+    const t = Math.min((now - glowIn) / glowDur, 1);
+    glowPhase = t;
+    drawRose(ctx, CW, CH, false);
+    if (t < 1) requestAnimationFrame(glowUp);
+    else {
+      // Fade out stage + cards, show final
+      document.getElementById('stage').style.opacity = '0';
+      document.getElementById('cards').style.opacity = '0';
+      setTimeout(showFinalScreen, 1400);
+    }
+  })(glowIn);
+}
+
+function showFinalScreen() {
+  // Setup final canvas
+  const fc = document.getElementById('finalCanvas');
+  const size = Math.min(window.innerWidth * 0.8, 320);
+  fc.width  = size * devicePixelRatio;
+  fc.height = size * devicePixelRatio;
+  fc.style.width  = size + 'px';
+  fc.style.height = size + 'px';
+  const fctx = fc.getContext('2d');
+  fctx.scale(devicePixelRatio, devicePixelRatio);
+
+  // Show overlay
+  const overlay = document.getElementById('finalOverlay');
+  overlay.style.display = 'flex';
+  requestAnimationFrame(() => {
+    overlay.classList.add('show');
+    setTimeout(() => {
+      document.getElementById('happyMD').classList.add('show');
+      document.getElementById('finalMsg').classList.add('show');
+    }, 400);
+  });
+
+  // Draw + animate glowing final rose
+  let gd = 1;
+  (function finalGlow() {
+    glowPhase += gd * 0.014;
+    if (glowPhase >= 1) gd = -1;
+    if (glowPhase <= 0.3) gd = 1;
+    fctx.clearRect(0, 0, size, size);
+    drawRose(fctx, size, size, true);
+    requestAnimationFrame(finalGlow);
+  })();
+}
+
+// ── PARTICLES ─────────────────────────────────────────────────────────
+function burst(cx, cy) {
+  const wrap = document.getElementById('particles');
+  for (let i = 0; i < 8; i++) {
+    const el = document.createElement('div');
+    el.className = 'pt';
+    el.textContent = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+    el.style.left = (cx + (Math.random() - 0.5) * 90) + 'px';
+    el.style.top  = (cy + (Math.random() - 0.5) * 70) + 'px';
+    el.style.animationDelay = (Math.random() * 0.3) + 's';
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 2200);
+  }
+}
+
+// ── INTRO ──────────────────────────────────────────────────────────────
+function beginExp() {
+  document.getElementById('intro').classList.add('out');
+  setTimeout(() => {
+    document.getElementById('intro').style.display = 'none';
+    document.getElementById('main').classList.add('show');
+    resizeCanvas();
+    drawRose(ctx, CW, CH, false);
+    updateHint();
+  }, 1400);
+}
+
+// ── MUSIC ─────────────────────────────────────────────────────────────
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.18; // soft background level
+
+function startMusic() {
+  bgMusic.play();
+  document.getElementById('unmuteBtn').classList.add('hide');
+  document.getElementById('skipBtn').classList.add('show');
+}
+
+// ── VIDEO → INTRO ────────────────────────────────────────────────────
+function endVideo() {
+  const vs = document.getElementById('videoScreen');
+  vs.classList.add('out');
+  setTimeout(() => {
+    vs.style.display = 'none';
+    // Now boot the intro animations
+    document.getElementById('introBudWrap').classList.add('show');
+    document.getElementById('introText').classList.add('show');
+    setTimeout(() => document.getElementById('introHint').classList.add('show'), 800);
+  }, 1200);
+}
+
+const videoEl = document.getElementById('videoEl');
+videoEl.addEventListener('ended', endVideo);
+
+// Show unmute button after 0.5s
+setTimeout(() => document.getElementById('unmuteBtn').classList.add('show'), 500);
+</script>
+</body>
+</html>

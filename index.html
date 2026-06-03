@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>IronLog — Gym Tracker</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#0d0d12"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="IronLog"/>
+<link rel="apple-touch-icon" href="https://placehold.co/192x192/c9a84c/0d0d12?text=IL"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d0d12;
+  --bg2:#13131c;
+  --bg3:#1a1a28;
+  --bg4:#222235;
+  --gold:#c9a84c;
+  --gold2:#e8c96d;
+  --gold3:#f5e4b0;
+  --red:#c0392b;
+  --red2:#e74c3c;
+  --teal:#1abc9c;
+  --teal2:#2ecc71;
+  --purple:#8e44ad;
+  --purple2:#9b59b6;
+  --border:#2a2a42;
+  --border2:#3a3a5c;
+  --text:#e8e0d0;
+  --text2:#a09880;
+  --text3:#6a6280;
+  --font-display:'Cinzel',serif;
+  --font-body:'Crimson Pro',serif;
+  --nav-h:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;overflow:hidden}
+body{display:flex;flex-direction:column}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* LAYOUT */
+#app{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.page{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 16px 80px}
+.page.active{display:block}
+
+/* NAV */
+nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--bg2);border-top:1px solid var(--border);display:flex;z-index:100}
+nav button{flex:1;border:none;background:transparent;color:var(--text3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:var(--font-display);font-size:9px;letter-spacing:.5px;cursor:pointer;transition:color .2s;padding-bottom:4px}
+nav button i{font-size:20px;line-height:1}
+nav button.active{color:var(--gold)}
+nav button.active i{text-shadow:0 0 12px rgba(201,168,76,.5)}
+
+/* TYPOGRAPHY */
+.page-title{font-family:var(--font-display);font-size:18px;color:var(--gold);letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.page-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border2),transparent)}
+.section-title{font-family:var(--font-display);font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+
+/* CARDS */
+.rpg-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden}
+.rpg-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--gold),transparent)}
+.rpg-card.teal::before{background:linear-gradient(to right,var(--teal),transparent)}
+.rpg-card.purple::before{background:linear-gradient(to right,var(--purple2),transparent)}
+.rpg-card.red::before{background:linear-gradient(to right,var(--red2),transparent)}
+
+/* STAT BARS */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 8px;text-align:center}
+.stat-label{font-family:var(--font-display);font-size:9px;letter-spacing:1px;color:var(--text3);margin-bottom:4px}
+.stat-val{font-family:var(--font-display);font-size:22px;color:var(--gold2);line-height:1}
+
+/* XP BAR */
+.xp-bar-wrap{margin-bottom:16px}
+.xp-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px;font-family:var(--font-display);font-size:10px;letter-spacing:.5px}
+.xp-track{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.xp-fill{height:100%;border-radius:3px;background:linear-gradient(to right,var(--gold),var(--gold2));transition:width .6s ease}
+
+/* PR LIST */
+.pr-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.pr-row:last-child{border-bottom:none}
+.pr-name{font-size:14px;color:var(--text)}
+.pr-date{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--font-display);letter-spacing:.3px}
+.pr-val{font-family:var(--font-display);font-size:14px;color:var(--gold2);text-align:right}
+.pr-reps{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* BUTTONS */
+.btn{padding:10px 18px;border-radius:6px;font-family:var(--font-display);font-size:12px;letter-spacing:.8px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(.97)}
+.btn-gold{background:var(--gold);color:#0d0d12;border-color:var(--gold2);font-weight:700}
+.btn-gold:active{background:var(--gold2)}
+.btn-teal{background:var(--teal);color:#0d0d12;border-color:var(--teal2);font-weight:700}
+.btn-red{color:var(--red2);border-color:var(--red)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-xs{padding:4px 8px;font-size:10px;letter-spacing:.3px}
+.btn-block{width:100%;justify-content:center}
+
+/* INPUTS */
+input,select{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--font-body);font-size:15px;padding:9px 12px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--gold)}
+input::placeholder{color:var(--text3)}
+label{font-family:var(--font-display);font-size:10px;letter-spacing:1px;color:var(--text3);display:block;margin-bottom:5px;margin-top:12px}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-family:var(--font-display);font-size:9px;letter-spacing:.5px;font-weight:600}
+.badge-gold{background:rgba(201,168,76,.15);color:var(--gold2);border:1px solid rgba(201,168,76,.3)}
+.badge-teal{background:rgba(26,188,156,.15);color:var(--teal);border:1px solid rgba(26,188,156,.3)}
+.badge-purple{background:rgba(155,89,182,.15);color:var(--purple2);border:1px solid rgba(155,89,182,.3)}
+.badge-red{background:rgba(192,57,43,.15);color:var(--red2);border:1px solid rgba(192,57,43,.3)}
+
+/* MODE TOGGLE */
+.mode-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px;gap:3px;margin-bottom:14px}
+.mode-btn{flex:1;padding:8px;border:none;border-radius:4px;font-family:var(--font-display);font-size:10px;letter-spacing:.5px;cursor:pointer;background:transparent;color:var(--text3);transition:all .15s}
+.mode-btn.active-machine{background:rgba(201,168,76,.15);color:var(--gold2);border:1px solid rgba(201,168,76,.3)}
+.mode-btn.active-free{background:rgba(26,188,156,.15);color:var(--teal);border:1px solid rgba(26,188,156,.3)}
+
+/* DAY TABS */
+.day-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.day-tab{padding:7px 14px;border-radius:4px;font-family:var(--font-display);font-size:10px;letter-spacing:.5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);transition:all .15s}
+.day-tab.active-machine{background:rgba(201,168,76,.15);color:var(--gold2);border-color:rgba(201,168,76,.3)}
+.day-tab.active-free{background:rgba(26,188,156,.15);color:var(--teal);border-color:rgba(26,188,156,.3)}
+
+/* EXERCISE CARD */
+.ex-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.ex-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer}
+.ex-name{font-size:15px;color:var(--text);margin-bottom:3px}
+.ex-meta{font-family:var(--font-display);font-size:10px;color:var(--text3);letter-spacing:.3px}
+.ex-tip{padding:7px 14px;font-size:13px;color:var(--text2);font-style:italic;border-bottom:1px solid var(--border);background:rgba(201,168,76,.04)}
+.ex-body{padding:12px 14px;border-top:1px solid var(--border)}
+.set-header{display:grid;grid-template-columns:28px 1fr 1fr 68px;gap:6px;margin-bottom:6px}
+.set-lbl{font-family:var(--font-display);font-size:9px;letter-spacing:.5px;color:var(--text3)}
+.set-row-grid{display:grid;grid-template-columns:28px 1fr 1fr 68px;gap:6px;align-items:center;margin-bottom:6px}
+.set-num{font-family:var(--font-display);font-size:11px;color:var(--text3);text-align:center}
+.set-done-btn{padding:6px;border-radius:4px;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);font-family:var(--font-display);font-size:9px;letter-spacing:.3px;cursor:pointer;text-align:center;transition:all .15s;width:100%}
+.set-done-btn.done{background:rgba(26,188,156,.15);color:var(--teal);border-color:rgba(26,188,156,.4)}
+.set-row-grid.faded{opacity:.45}
+
+/* BACKUP */
+.backup-panel{background:var(--bg3);border-top:1px solid var(--border)}
+.backup-title{font-family:var(--font-display);font-size:9px;letter-spacing:1px;color:var(--text3);padding:8px 14px 4px;text-transform:uppercase}
+.backup-row{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border)}
+.backup-row:last-child{border-bottom:none}
+.backup-name{font-size:13px;color:var(--text2)}
+.backup-sets{font-family:var(--font-display);font-size:10px;color:var(--text3)}
+
+/* TIMER */
+.timer-wrap{display:flex;flex-direction:column;align-items:center;padding:20px 0 10px}
+.timer-svg-wrap{position:relative;width:200px;height:200px}
+.timer-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.timer-num{font-family:var(--font-display);font-size:44px;color:var(--gold2);letter-spacing:2px;line-height:1}
+.timer-status{font-family:var(--font-display);font-size:10px;color:var(--text3);letter-spacing:2px;margin-top:4px;text-transform:uppercase}
+.preset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.rest-tip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.rest-type{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center}
+.rest-type-name{font-family:var(--font-display);font-size:9px;letter-spacing:.5px;color:var(--text3);margin-bottom:3px}
+.rest-type-val{font-size:13px;color:var(--gold2)}
+
+/* COMPLETE BANNER */
+.complete-banner{background:rgba(26,188,156,.1);border:1px solid rgba(26,188,156,.3);border-radius:6px;padding:10px 14px;text-align:center;font-family:var(--font-display);font-size:11px;letter-spacing:.5px;color:var(--teal);margin-bottom:10px;display:none}
+
+/* HISTORY */
+.hist-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.hist-name{font-size:15px;color:var(--text);margin-bottom:2px}
+.hist-date{font-family:var(--font-display);font-size:10px;color:var(--text3);letter-spacing:.3px;margin-bottom:6px}
+.hist-meta{font-size:12px;color:var(--text2);margin-bottom:8px}
+.hist-ex{font-size:13px;color:var(--text2);margin-bottom:3px}
+.hist-ex span{color:var(--text3)}
+
+/* EMPTY */
+.empty{text-align:center;padding:2rem;color:var(--text3);font-family:var(--font-display);font-size:12px;letter-spacing:.5px}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:12px 0}
+
+/* CHART */
+#prog-chart{max-height:120px}
+
+/* FLICKER animation */
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.85}}
+.gold-glow{animation:flicker 3s infinite}
+
+/* LEVEL badge */
+.level-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:4px;padding:4px 10px;font-family:var(--font-display);font-size:10px;letter-spacing:.5px;color:var(--gold2)}
+</style>
+
+</head>
+<body>
+
+<div id="app">
+
+<!-- PROGRESS PAGE -->
+
+<div id="page-dashboard" class="page active">
+  <div class="page-title gold-glow"><i class="ti ti-user" style="font-size:18px"></i> Player Profile</div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="stat-label">Sessions</div><div class="stat-val" id="s-total">0</div></div>
+    <div class="stat-box"><div class="stat-label">This week</div><div class="stat-val" id="s-week">0</div></div>
+    <div class="stat-box"><div class="stat-label">Total sets</div><div class="stat-val" id="s-sets">0</div></div>
+  </div>
+
+  <div class="xp-bar-wrap">
+    <div class="xp-label"><span id="xp-level">Level 1 — Initiate</span><span id="xp-count">0 / 10 XP</span></div>
+    <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="rpg-card" style="margin-bottom:10px">
+    <div class="section-title" style="margin-bottom:10px">Personal Records</div>
+    <div id="pr-list"><div class="empty">Log sessions to unlock records</div></div>
+  </div>
+
+  <div class="rpg-card teal">
+    <div class="section-title" style="margin-bottom:8px">Volume Trend</div>
+    <canvas id="prog-chart"></canvas>
+    <div id="chart-empty" class="empty" style="display:none;padding:.5rem 0;font-size:11px">Log 2+ sessions to see trend</div>
+  </div>
+</div>
+
+<!-- TEMPLATES PAGE -->
+
+<div id="page-templates" class="page">
+  <div class="page-title"><i class="ti ti-list-check" style="font-size:18px"></i> Training Plans</div>
+  <div class="mode-toggle">
+    <button class="mode-btn active-machine" id="mode-machine" onclick="setMode('machine')">⚙ Gym — Machine</button>
+    <button class="mode-btn" id="mode-free" onclick="setMode('free')">🏋 Home — Free Weight</button>
+  </div>
+  <div class="day-tabs" id="day-tabs"></div>
+  <div id="template-content"></div>
+</div>
+
+<!-- WORKOUT PAGE -->
+
+<div id="page-workout" class="page">
+  <div class="page-title"><i class="ti ti-barbell" style="font-size:18px"></i> Training Session</div>
+  <div class="rpg-card" style="margin-bottom:10px">
+    <label>Session name</label>
+    <input type="text" id="session-name" placeholder="e.g. Upper Day A — Machine"/>
+    <label>Date</label>
+    <input type="date" id="session-date"/>
+  </div>
+  <div id="complete-banner" class="complete-banner">✓ All sets complete — save your session!</div>
+  <div id="exercises-wrap"></div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <input type="text" id="new-ex" placeholder="Add exercise..." style="flex:1"/>
+    <button class="btn btn-sm" onclick="addExFromInput()" style="white-space:nowrap"><i class="ti ti-plus"></i></button>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-gold btn-block" style="flex:1" onclick="saveSession()"><i class="ti ti-device-floppy"></i> Save Session</button>
+    <button class="btn btn-red btn-sm" onclick="clearWorkout()"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="save-msg" style="text-align:center;font-family:var(--font-display);font-size:11px;color:var(--teal);letter-spacing:.5px;margin-top:8px;display:none">✦ Session Saved ✦</div>
+</div>
+
+<!-- TIMER PAGE -->
+
+<div id="page-timer" class="page">
+  <div class="page-title"><i class="ti ti-hourglass" style="font-size:18px"></i> Rest Phase</div>
+  <div class="timer-wrap">
+    <div class="timer-svg-wrap">
+      <svg width="200" height="200" viewBox="0 0 200 200" style="transform:rotate(-90deg)">
+        <circle fill="none" stroke="#1a1a28" stroke-width="10" cx="100" cy="100" r="88"/>
+        <circle id="t-ring" fill="none" stroke="url(#gold-grad)" stroke-width="10" stroke-linecap="round"
+          cx="100" cy="100" r="88" stroke-dasharray="553" stroke-dashoffset="0"/>
+        <defs>
+          <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#c9a84c"/>
+            <stop offset="100%" stop-color="#e8c96d"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-num" id="t-display">1:30</div>
+        <div class="timer-status" id="t-status">ready</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="preset-grid">
+    <button class="btn btn-sm btn-block" onclick="setT(30)">30s</button>
+    <button class="btn btn-sm btn-block" onclick="setT(60)">1 min</button>
+    <button class="btn btn-sm btn-block" onclick="setT(90)">90s</button>
+    <button class="btn btn-sm btn-block" onclick="setT(120)">2 min</button>
+    <button class="btn btn-sm btn-block" onclick="setT(180)">3 min</button>
+    <button class="btn btn-sm btn-block" onclick="setT(300)">5 min</button>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <input type="number" id="t-custom" placeholder="Custom seconds..." min="5" style="flex:1"/>
+    <button class="btn btn-sm" onclick="setCustomT()">Set</button>
+  </div>
+
+  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
+    <button class="btn" onclick="resetT()"><i class="ti ti-refresh"></i> Reset</button>
+    <button class="btn btn-gold" id="t-toggle" onclick="toggleT()"><i class="ti ti-player-play"></i> Start</button>
+  </div>
+
+  <div class="rest-tip">
+    <div class="rest-type"><div class="rest-type-name">Strength</div><div class="rest-type-val">2–3 min</div></div>
+    <div class="rest-type"><div class="rest-type-name">Hypertrophy</div><div class="rest-type-val">60–90s</div></div>
+    <div class="rest-type"><div class="rest-type-name">Isolation</div><div class="rest-type-val">45–60s</div></div>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+
+<div id="page-history" class="page">
+  <div class="page-title"><i class="ti ti-history" style="font-size:18px"></i> Session History</div>
+  <div id="history-wrap"><div class="empty">No sessions logged yet</div></div>
+</div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+
+<nav>
+  <button class="active" onclick="navTo('dashboard',this)"><i class="ti ti-user"></i>Profile</button>
+  <button onclick="navTo('templates',this)"><i class="ti ti-list-check"></i>Plans</button>
+  <button onclick="navTo('workout',this)"><i class="ti ti-barbell"></i>Log</button>
+  <button onclick="navTo('timer',this)"><i class="ti ti-hourglass"></i>Timer</button>
+  <button onclick="navTo('history',this)"><i class="ti ti-history"></i>History</button>
+</nav>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const LEVELS=[
+  {name:'Beginner',xp:0},
+  {name:'Consistent',xp:10},
+  {name:'Dedicated',xp:25},
+  {name:'Athlete',xp:50},
+  {name:'Elite',xp:100},
+  {name:'Pro',xp:200},
+  {name:'Legendary',xp:500}
+];
+
+const PLANS={
+machine:{
+'Upper A':{exercises:[
+{name:'Machine chest press',muscle:'Chest',sets:3,reps:'6-8',rest:120,tip:'Seat so handles align with mid-chest',backups:[{name:'Pec deck / chest fly machine',sets:3,reps:'10-12',rest:90},{name:'Cable crossover (low-to-high)',sets:3,reps:'12',rest:90},{name:'Incline machine chest press',sets:3,reps:'8-10',rest:120}]},
+{name:'Lat pulldown',muscle:'Back',sets:3,reps:'8-10',rest:120,tip:'Pull bar to upper chest, squeeze lats at bottom',backups:[{name:'Assisted pull-up machine',sets:3,reps:'8-10',rest:120},{name:'Cable straight-arm pulldown',sets:3,reps:'12',rest:90},{name:'Seated row machine',sets:3,reps:'10-12',rest:90}]},
+{name:'Machine shoulder press',muscle:'Shoulders',sets:3,reps:'10',rest:90,tip:'Keep core braced, full range of motion',backups:[{name:'Smith machine overhead press',sets:3,reps:'8-10',rest:90},{name:'Cable lateral raise (both sides)',sets:3,reps:'12-15',rest:60}]},
+{name:'Seated cable row',muscle:'Upper back',sets:3,reps:'10-12',rest:90,tip:'Squeeze shoulder blades together at peak',backups:[{name:'Chest-supported row machine',sets:3,reps:'10-12',rest:90},{name:'Cable face pull',sets:3,reps:'12-15',rest:60}]},
+{name:'Tricep cable pushdowns',muscle:'Triceps',sets:3,reps:'12',rest:60,tip:'Keep elbows pinned to sides throughout',backups:[{name:'Overhead cable tricep extension',sets:3,reps:'10-12',rest:60},{name:'Machine tricep dip',sets:3,reps:'12',rest:60}]},
+{name:'Dumbbell reverse flyes',muscle:'Rear delts',sets:3,reps:'12-15',rest:60,tip:'Slow controlled reps, slight bend in elbows',backups:[{name:'Cable face pull (rear-delt focus)',sets:3,reps:'15',rest:60},{name:'Rear delt machine fly',sets:3,reps:'12-15',rest:60}]},
+]},
+'Lower A':{exercises:[
+{name:'Leg press machine',muscle:'Quads / glutes',sets:3,reps:'6-8',rest:150,tip:'Feet mid-platform, knees track over toes',backups:[{name:'Smith machine squat',sets:3,reps:'8',rest:120},{name:'Hack squat machine',sets:3,reps:'8-10',rest:120},{name:'Leg extension (warm-up)',sets:2,reps:'15',rest:60}]},
+{name:'Machine seated leg curl',muscle:'Hamstrings',sets:3,reps:'10',rest:90,tip:'Full stretch at bottom, slow eccentric',backups:[{name:'Lying leg curl machine',sets:3,reps:'10',rest:90},{name:'Glute-ham raise machine',sets:3,reps:'10',rest:90}]},
+{name:'Leg extensions',muscle:'Quads',sets:3,reps:'12',rest:90,tip:'Pause and squeeze at top of each rep',backups:[{name:'Smith machine reverse lunge',sets:3,reps:'10/leg',rest:90},{name:'Leg press (narrow stance)',sets:2,reps:'12',rest:90}]},
+{name:'Hyperextensions',muscle:'Glutes / lower back',sets:3,reps:'12-15',rest:60,tip:'Drive hips into pad, squeeze glutes at top',backups:[{name:'Glute kickback machine',sets:3,reps:'12/leg',rest:60},{name:'Hip abductor machine',sets:3,reps:'15',rest:60}]},
+{name:"Hanging knee raises / Captain's chair",muscle:'Core',sets:3,reps:'max',rest:60,tip:'Control the swing, tuck knees to chest',backups:[{name:'Cable kneeling crunch',sets:3,reps:'15',rest:60},{name:'Ab crunch machine',sets:3,reps:'15-20',rest:60}]},
+{name:'Seated calf raises',muscle:'Calves',sets:3,reps:'15',rest:60,tip:'Full stretch at bottom, pause at top',backups:[{name:'Calf raise on leg press',sets:3,reps:'15-20',rest:60},{name:'Standing calf raise machine',sets:3,reps:'15',rest:60}]},
+]},
+'Upper B':{exercises:[
+{name:'Incline machine chest press',muscle:'Chest (upper)',sets:3,reps:'8-10',rest:120,tip:'Focus on squeezing upper pecs at top',backups:[{name:'Pec deck / chest fly machine',sets:3,reps:'10-12',rest:90},{name:'Cable crossover (high-to-low)',sets:3,reps:'12',rest:90},{name:'Machine chest press (flat)',sets:3,reps:'8-10',rest:120}]},
+{name:'Assisted pull-up machine',muscle:'Back / biceps',sets:3,reps:'8-10',rest:120,tip:'Full hang at bottom, chin above bar at top',backups:[{name:'Lat pulldown (wide grip)',sets:3,reps:'8-10',rest:120},{name:'Neutral grip lat pulldown',sets:3,reps:'10',rest:90},{name:'Cable straight-arm pulldown',sets:3,reps:'12',rest:90}]},
+{name:'Cable face pulls',muscle:'Rear delts / upper back',sets:3,reps:'12-15',rest:90,tip:'Pull to forehead, rotate hands back at peak',backups:[{name:'Rear delt machine fly',sets:3,reps:'12-15',rest:60},{name:'Seated cable row (high attachment)',sets:3,reps:'12',rest:90}]},
+{name:'Dumbbell lateral raises',muscle:'Lateral delts',sets:3,reps:'12-15',rest:60,tip:'Lead with elbows, stop at shoulder height',backups:[{name:'Cable lateral raise (single arm)',sets:3,reps:'12-15/side',rest:60},{name:'Machine lateral raise',sets:3,reps:'12-15',rest:60}]},
+{name:'Cable bicep curls',muscle:'Biceps',sets:3,reps:'12',rest:60,tip:'Keep elbows pinned, full range of motion',backups:[{name:'Preacher curl machine',sets:3,reps:'10-12',rest:60},{name:'Hammer curl machine / rope cable curl',sets:3,reps:'12',rest:60}]},
+]},
+'Lower B':{exercises:[
+{name:'Smith machine squat',muscle:'Quads / glutes',sets:3,reps:'8',rest:120,tip:'Bar on upper traps, feet slightly forward',backups:[{name:'Leg press machine',sets:3,reps:'8-10',rest:120},{name:'Hack squat machine',sets:3,reps:'8-10',rest:120},{name:'Smith machine front squat',sets:3,reps:'8',rest:120}]},
+{name:'Machine Romanian deadlift / seated leg curl',muscle:'Hamstrings',sets:3,reps:'10',rest:90,tip:'Feel the stretch in hamstrings at bottom',backups:[{name:'Lying leg curl machine',sets:3,reps:'10-12',rest:90},{name:'Glute-ham raise machine',sets:3,reps:'10',rest:90}]},
+{name:'Smith machine reverse lunges',muscle:'Glutes / quads',sets:3,reps:'10/leg',rest:90,tip:'Keep front shin vertical, drive through heel',backups:[{name:'Hip abductor machine',sets:3,reps:'15',rest:60},{name:'Glute kickback machine',sets:3,reps:'12/leg',rest:60}]},
+{name:'Seated calf raises',muscle:'Calves',sets:3,reps:'15',rest:60,tip:'Full range - stretch down, hold squeeze at top',backups:[{name:'Calf raise on leg press',sets:3,reps:'15-20',rest:60},{name:'Standing calf raise machine',sets:3,reps:'15',rest:60}]},
+{name:'Plank hold',muscle:'Core',sets:3,reps:'max time',rest:60,tip:'Squeeze glutes and core, neutral spine',backups:[{name:'Ab crunch machine',sets:3,reps:'15-20',rest:60},{name:'Cable kneeling crunch',sets:3,reps:'15',rest:60}]},
+]},
+},
+free:{
+'Upper A':{exercises:[
+{name:'Dumbbell bench press',muscle:'Chest',sets:3,reps:'6-8',rest:120,tip:'Control the descent, press through full range',backups:[{name:'Push-ups (weighted or feet elevated)',sets:3,reps:'10-15',rest:90},{name:'Dumbbell floor press',sets:3,reps:'8-10',rest:90}]},
+{name:'Dumbbell single-arm row',muscle:'Back',sets:3,reps:'10-12',rest:90,tip:'Elbow drives back and up, squeeze at top',backups:[{name:'Barbell bent-over row',sets:3,reps:'8-10',rest:90},{name:'Renegade row',sets:3,reps:'8/side',rest:90}]},
+{name:'Seated overhead dumbbell press',muscle:'Shoulders',sets:3,reps:'6-8',rest:120,tip:'Brace core, press in a straight line overhead',backups:[{name:'Standing dumbbell press',sets:3,reps:'8-10',rest:90},{name:'Arnold press',sets:3,reps:'10',rest:90}]},
+{name:'Dumbbell lateral raises',muscle:'Lateral delts',sets:3,reps:'12-15',rest:60,tip:'Lead with elbows, controlled all the way down',backups:[{name:'Prone incline lateral raise',sets:3,reps:'12',rest:60},{name:'Seated lateral raise (strict form)',sets:3,reps:'15',rest:60}]},
+{name:'Dumbbell overhead tricep extension',muscle:'Triceps',sets:3,reps:'10-12',rest:60,tip:'Keep elbows close to head, full stretch at bottom',backups:[{name:'Dumbbell skull crushers',sets:3,reps:'10-12',rest:60},{name:'Diamond push-ups',sets:3,reps:'max',rest:60}]},
+{name:'Dumbbell reverse flyes',muscle:'Rear delts',sets:3,reps:'12-15',rest:60,tip:'Hinge slightly at hips, squeeze at top of movement',backups:[{name:'Prone incline reverse flyes',sets:3,reps:'12-15',rest:60},{name:'Band pull-aparts',sets:3,reps:'20',rest:45}]},
+]},
+'Lower A':{exercises:[
+{name:'Goblet squat',muscle:'Quads / glutes',sets:3,reps:'8-10',rest:120,tip:'Hold dumbbell/KB at chest, chest tall throughout',backups:[{name:'Dumbbell sumo squat',sets:3,reps:'10',rest:90},{name:'Dumbbell Bulgarian split squat',sets:3,reps:'8/leg',rest:90}]},
+{name:'Dumbbell Romanian deadlift',muscle:'Hamstrings / glutes',sets:3,reps:'10',rest:90,tip:'Hinge at hips, feel hamstring stretch, keep back flat',backups:[{name:'Single-leg dumbbell RDL',sets:3,reps:'8/leg',rest:90},{name:'Good mornings (light)',sets:3,reps:'12',rest:90}]},
+{name:'Dumbbell reverse lunges',muscle:'Glutes / quads',sets:3,reps:'10/leg',rest:90,tip:'Step back far enough to keep front shin vertical',backups:[{name:'Dumbbell walking lunges',sets:3,reps:'10/leg',rest:90},{name:'Step-ups (use a chair or box)',sets:3,reps:'10/leg',rest:90}]},
+{name:'Dumbbell hip thrust',muscle:'Glutes',sets:3,reps:'10-12',rest:90,tip:'Upper back on bench, drive through heels, squeeze at top',backups:[{name:'Glute bridge (bodyweight or weighted)',sets:3,reps:'15',rest:60},{name:'Single-leg glute bridge',sets:3,reps:'12/leg',rest:60}]},
+{name:'Standing dumbbell calf raises',muscle:'Calves',sets:3,reps:'15',rest:60,tip:'Slow lower, full stretch at bottom',backups:[{name:'Single-leg dumbbell calf raise',sets:3,reps:'12/leg',rest:60},{name:'Calf raise on a step (bodyweight)',sets:3,reps:'20',rest:45}]},
+{name:'Plank hold',muscle:'Core',sets:3,reps:'max time',rest:60,tip:'Squeeze glutes and abs, breathe steadily',backups:[{name:'Dumbbell Russian twist',sets:3,reps:'20 total',rest:60},{name:'Dead bug',sets:3,reps:'10/side',rest:60}]},
+]},
+'Upper B':{exercises:[
+{name:'Incline dumbbell press',muscle:'Chest (upper)',sets:3,reps:'8-10',rest:120,tip:'30-45 degrees incline, control the descent',backups:[{name:'Incline dumbbell flyes',sets:3,reps:'12',rest:90},{name:'Dumbbell floor press',sets:3,reps:'8-10',rest:90}]},
+{name:'Dumbbell pull-over',muscle:'Lats / serratus',sets:3,reps:'12',rest:90,tip:'Keep slight bend in elbows, stretch lats fully at top',backups:[{name:'Barbell bent-over row',sets:3,reps:'8-10',rest:90},{name:'Dumbbell single-arm row',sets:3,reps:'10-12',rest:90}]},
+{name:'Dumbbell bent-over reverse fly',muscle:'Rear delts',sets:3,reps:'12-15',rest:60,tip:'Hinge to parallel, squeeze shoulder blades at top',backups:[{name:'Band pull-aparts',sets:3,reps:'20',rest:45},{name:'Prone incline reverse fly',sets:3,reps:'12-15',rest:60}]},
+{name:'Dumbbell lateral raises',muscle:'Lateral delts',sets:3,reps:'12-15',rest:60,tip:'Lead with elbows, pause briefly at shoulder height',backups:[{name:'Prone incline lateral raise',sets:3,reps:'12',rest:60},{name:'Seated lateral raise (strict form)',sets:3,reps:'15',rest:60}]},
+{name:'Dumbbell bicep curl',muscle:'Biceps',sets:3,reps:'12',rest:60,tip:'Supinate wrist at top, full stretch at bottom',backups:[{name:'Incline dumbbell curl',sets:3,reps:'10-12',rest:60},{name:'Hammer curl',sets:3,reps:'12',rest:60}]},
+]},
+'Lower B':{exercises:[
+{name:'Dumbbell goblet squat (heavy)',muscle:'Quads / glutes',sets:3,reps:'8',rest:120,tip:'Go as heavy as you can control with full depth',backups:[{name:'Dumbbell Bulgarian split squat',sets:3,reps:'8/leg',rest:90},{name:'Dumbbell sumo squat',sets:3,reps:'10',rest:90}]},
+{name:'Dumbbell Romanian deadlift',muscle:'Hamstrings',sets:3,reps:'10',rest:90,tip:'Maintain neutral spine, feel the hamstring stretch',backups:[{name:'Single-leg RDL',sets:3,reps:'8/leg',rest:90},{name:'Dumbbell good morning',sets:3,reps:'12',rest:90}]},
+{name:'Dumbbell reverse lunges',muscle:'Glutes / quads',sets:3,reps:'10/leg',rest:90,tip:'Step back far enough so front knee stays over ankle',backups:[{name:'Step-ups (weighted)',sets:3,reps:'10/leg',rest:90},{name:'Lateral lunge',sets:3,reps:'10/leg',rest:90}]},
+{name:'Single-leg dumbbell calf raises',muscle:'Calves',sets:3,reps:'12/leg',rest:60,tip:'Use a step for extra range, slow eccentric',backups:[{name:'Standing calf raises (both legs, heavier)',sets:3,reps:'15-20',rest:60},{name:'Seated calf stretch & raise (no machine)',sets:3,reps:'20',rest:45}]},
+{name:'Dumbbell Russian twist',muscle:'Core',sets:3,reps:'20 total',rest:60,tip:'Rotate from core not just arms, controlled pace',backups:[{name:'Dead bug',sets:3,reps:'10/side',rest:60},{name:'Plank hold',sets:3,reps:'max time',rest:60}]},
+]},
+}
+};
+
+let sessions=[],exercises=[],tTotal=90,tLeft=90,tRunning=false,tInterval=null,chart=null;
+let currentMode='machine',currentDay='Upper A';
+try{sessions=JSON.parse(localStorage.getItem('iq_sessions')||'[]')}catch(e){}
+
+function navTo(id,btn){
+document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+document.getElementById('page-'+id).classList.add('active');
+btn.classList.add('active');
+if(id==='dashboard')renderDash();
+if(id==='history')renderHistory();
+if(id==='workout')initDate();
+if(id==='templates')renderTemplates();
+}
+
+function setMode(m){
+currentMode=m;
+document.getElementById('mode-machine').className='mode-btn'+(m==='machine'?' active-machine':'');
+document.getElementById('mode-free').className='mode-btn'+(m==='free'?' active-free':'');
+currentDay=Object.keys(PLANS[m])[0];
+renderTemplates();
+}
+
+function renderTemplates(){
+const days=Object.keys(PLANS[currentMode]);
+document.getElementById('day-tabs').innerHTML=days.map(d=>
+`<button class="day-tab ${d===currentDay?('active-'+currentMode):''}" onclick="selectDay('${d}')">${d}</button>`
+).join('');
+const plan=PLANS[currentMode][currentDay];
+const isM=currentMode==='machine';
+document.getElementById('template-content').innerHTML=` <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"> <div> <div style="font-family:var(--font-display);font-size:14px;color:var(--gold2);letter-spacing:.5px">${currentDay}</div> <div style="font-size:12px;color:var(--text3);margin-top:2px">${plan.exercises.length} exercises</div> </div> <button class="btn btn-teal btn-sm" onclick="loadTemplate()"><i class="ti ti-player-play"></i> Start Session</button> </div> ${plan.exercises.map((ex,i)=>`
+<div class="ex-card">
+<div class="ex-header" onclick="toggleBackup(${i})">
+<div>
+<div class="ex-name">${ex.name}</div>
+<div class="ex-meta">${ex.sets} sets &nbsp; ${ex.reps} reps &nbsp; rest ${fmtRest(ex.rest)} &nbsp; <span class="badge badge-gold">${ex.muscle}</span></div>
+</div>
+<i class="ti ti-chevron-down" id="chev-${i}" style="color:var(--text3);font-size:16px;transition:transform .2s"></i>
+</div>
+${ex.tip?`<div class="ex-tip">* ${ex.tip}</div>`:''}
+<div id="backup-${i}" style="display:none">
+<div class="backup-panel">
+<div class="backup-title">Backup options</div>
+${ex.backups.map(b=>`<div class="backup-row"><span class="backup-name">${b.name}</span><span class="backup-sets">${b.sets}x${b.reps}</span></div>`).join('')}
+</div>
+</div>
+</div>
+`).join('')} `;
+}
+
+function toggleBackup(i){
+const el=document.getElementById('backup-'+i);
+const ch=document.getElementById('chev-'+i);
+const open=el.style.display==='none';
+el.style.display=open?'block':'none';
+ch.style.transform=open?'rotate(180deg)':'';
+}
+
+function selectDay(d){currentDay=d;renderTemplates()}
+
+function loadTemplate(){
+exercises=PLANS[currentMode][currentDay].exercises.map(ex=>({
+id:Date.now()+Math.random(),
+name:ex.name,targetSets:ex.sets,targetReps:ex.reps,restSecs:ex.rest,
+sets:Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}))
+}));
+document.getElementById('session-name').value=`${currentDay} - ${currentMode==='machine'?'Machine':'Free Weight'}`;
+initDate();
+navTo('workout',document.querySelectorAll('nav button')[2]);
+renderExercises();
+}
+
+function initDate(){
+const d=document.getElementById('session-date');
+if(!d.value)d.value=new Date().toISOString().slice(0,10);
+}
+
+function fmtRest(s){return s>=60?Math.floor(s/60)+(s%60?':'+String(s%60).padStart(2,'0'):'')+' min':s+'s'}
+
+function addExFromInput(){
+const inp=document.getElementById('new-ex');
+const n=inp.value.trim();if(!n)return;
+exercises.push({id:Date.now(),name:n,targetSets:3,targetReps:'',restSecs:90,sets:[{weight:'',reps:'',done:false}]});
+inp.value='';renderExercises();
+}
+
+function addSet(id){
+const ex=exercises.find(e=>e.id===id);
+if(ex){ex.sets.push({weight:'',reps:'',done:false});renderExercises()}
+}
+function removeSet(id,i){
+const ex=exercises.find(e=>e.id===id);
+if(ex&&ex.sets.length>1){ex.sets.splice(i,1);renderExercises()}
+}
+function removeEx(id){exercises=exercises.filter(e=>e.id!==id);renderExercises()}
+function updateSet(id,i,field,val){
+const ex=exercises.find(e=>e.id===id);if(ex)ex.sets[i][field]=val;
+}
+
+function markDone(id,i){
+const ex=exercises.find(e=>e.id===id);if(!ex)return;
+ex.sets[i].done=!ex.sets[i].done;
+renderExercises();
+const allDone=exercises.length>0&&exercises.every(e=>e.sets.every(s=>s.done));
+document.getElementById('complete-banner').style.display=allDone?'block':'none';
+if(ex.sets[i].done){
+const nextSet=ex.sets[i+1];
+const exIdx=exercises.indexOf(ex);
+const nextEx=exercises[exIdx+1];
+if(nextSet||nextEx){setT(ex.restSecs);startT();}
+}
+}
+
+function renderExercises(){
+const wrap=document.getElementById('exercises-wrap');
+if(!exercises.length){wrap.innerHTML='';return}
+wrap.innerHTML=exercises.map(ex=>` <div class="ex-card"> <div class="ex-header" style="cursor:default"> <div> <div class="ex-name">${ex.name}</div> <div class="ex-meta">Target: ${ex.targetSets}x${ex.targetReps||'-'} &nbsp; rest ${fmtRest(ex.restSecs)}</div> </div> <button class="btn btn-xs btn-red" onclick="removeEx(${ex.id})" style="border:1px solid var(--border)"><i class="ti ti-x"></i></button> </div> <div class="ex-body"> <div class="set-header"> <span class="set-lbl">#</span> <span class="set-lbl">Weight (lbs)</span> <span class="set-lbl">Reps</span> <span class="set-lbl">Status</span> </div> ${ex.sets.map((s,i)=>`
+<div class="set-row-grid${s.done?' faded':''}">
+<span class="set-num">${i+1}</span>
+<input type="number" placeholder="0" min="0" value="${s.weight}" inputmode="decimal"
+oninput="updateSet(${ex.id},${i},'weight',this.value)" style="padding:8px 10px;font-size:14px"/>
+<input type="number" placeholder="0" min="0" value="${s.reps}" inputmode="numeric"
+oninput="updateSet(${ex.id},${i},'reps',this.value)" style="padding:8px 10px;font-size:14px"/>
+<button class="set-done-btn${s.done?' done':''}" onclick="markDone(${ex.id},${i})">${s.done?'Done':'Done'}</button>
+</div>
+`).join('')} <button class="btn btn-xs" style="width:100%;margin-top:6px;justify-content:center" onclick="addSet(${ex.id})"><i class="ti ti-plus"></i> Add set</button> </div> </div> `).join('');
+}
+
+function saveSession(){
+const name=document.getElementById('session-name').value.trim()||'Session';
+const date=document.getElementById('session-date').value||new Date().toISOString().slice(0,10);
+const exData=exercises.filter(ex=>ex.sets.some(s=>s.reps)).map(ex=>({
+name:ex.name,
+sets:ex.sets.filter(s=>s.reps).map(s=>({reps:parseInt(s.reps)||0,weight:parseFloat(s.weight)||0}))
+}));
+if(!exData.length){alert('Log at least one set with reps to save.');return}
+sessions.push({id:Date.now(),name,date,exercises:exData});
+try{localStorage.setItem('iq_sessions',JSON.stringify(sessions))}catch(e){}
+exercises=[];renderExercises();
+document.getElementById('session-name').value='';
+document.getElementById('complete-banner').style.display='none';
+const msg=document.getElementById('save-msg');
+msg.style.display='block';setTimeout(()=>msg.style.display='none',2500);
+}
+
+function clearWorkout(){exercises=[];renderExercises();document.getElementById('complete-banner').style.display='none'}
+
+function getLevel(n){
+let lv=0;
+for(let i=0;i<LEVELS.length;i++){if(n>=LEVELS[i].xp)lv=i;}
+return lv;
+}
+
+function renderDash(){
+const n=sessions.length;
+document.getElementById('s-total').textContent=n;
+const now=new Date();
+document.getElementById('s-week').textContent=sessions.filter(s=>(now-new Date(s.date))<7*864e5).length;
+const totalSets=sessions.reduce((a,s)=>a+s.exercises.reduce((b,e)=>b+e.sets.length,0),0);
+document.getElementById('s-sets').textContent=totalSets;
+const xp=n;
+const lv=getLevel(xp);
+const cur=LEVELS[lv],next=LEVELS[lv+1];
+document.getElementById('xp-level').textContent=`Level ${lv+1} - ${cur.name}`;
+if(next){
+const pct=Math.round(((xp-cur.xp)/(next.xp-cur.xp))*100);
+document.getElementById('xp-count').textContent=`${xp-cur.xp} / ${next.xp-cur.xp} XP`;
+document.getElementById('xp-fill').style.width=pct+'%';
+} else {
+document.getElementById('xp-count').textContent='Max level';
+document.getElementById('xp-fill').style.width='100%';
+}
+renderPRs();renderChart();
+}
+
+function renderPRs(){
+const prs={};
+sessions.forEach(s=>s.exercises.forEach(ex=>{
+const maxW=Math.max(...ex.sets.map(st=>st.weight||0));
+const maxR=Math.max(...ex.sets.map(st=>st.reps||0));
+if(!prs[ex.name]||maxW>prs[ex.name].w)prs[ex.name]={w:maxW,r:maxR,d:s.date};
+}));
+const keys=Object.keys(prs);
+const el=document.getElementById('pr-list');
+if(!keys.length){el.innerHTML='<div class="empty">Complete quests to unlock records</div>';return}
+el.innerHTML=keys.slice(0,8).map(k=>`<div class="pr-row"> <div><div class="pr-name">${k}</div><div class="pr-date">${prs[k].d}</div></div> <div><div class="pr-val">${prs[k].w>0?prs[k].w+' lbs':'BW'}</div><div class="pr-reps">${prs[k].r} reps</div></div> </div>`).join('');
+}
+
+function renderChart(){
+const ctx=document.getElementById('prog-chart');
+const r=sessions.slice(-10);
+if(r.length<2){ctx.style.display='none';document.getElementById('chart-empty').style.display='block';return}
+ctx.style.display='block';document.getElementById('chart-empty').style.display='none';
+if(chart)chart.destroy();
+Chart.defaults.color='#6a6280';
+chart=new Chart(ctx,{
+type:'line',
+data:{
+labels:r.map(s=>s.date.slice(5)),
+datasets:[{
+data:r.map(s=>s.exercises.reduce((a,e)=>a+e.sets.length,0)),
+borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,.08)',
+tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8c96d',pointBorderColor:'#0d0d12',pointBorderWidth:2
+}]
+},
+options:{
+plugins:{legend:{display:false}},
+scales:{
+x:{grid:{color:'rgba(42,42,66,.8)'},ticks:{font:{size:10},color:'#6a6280'}},
+y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10},color:'#6a6280'},grid:{color:'rgba(42,42,66,.8)'}}
+},
+responsive:true,maintainAspectRatio:true
+}
+});
+}
+
+function renderHistory(){
+const wrap=document.getElementById('history-wrap');
+if(!sessions.length){wrap.innerHTML='<div class="empty">No sessions logged yet</div>';return}
+wrap.innerHTML=[...sessions].reverse().map(s=>{
+const totalSets=s.exercises.reduce((a,e)=>a+e.sets.length,0);
+const vol=s.exercises.reduce((a,e)=>a+e.sets.reduce((b,st)=>b+(st.weight*st.reps),0),0);
+return`<div class="hist-card"> <div style="display:flex;justify-content:space-between;align-items:flex-start"> <div> <div class="hist-name">${s.name}</div> <div class="hist-date">${s.date}</div> </div> <button class="btn btn-xs btn-red" onclick="delSession(${s.id})"><i class="ti ti-trash"></i></button> </div> <div class="hist-meta">${s.exercises.length} exercises &nbsp; ${totalSets} sets${vol>0?' &nbsp; '+Math.round(vol).toLocaleString()+' lbs volume':''}</div> ${s.exercises.map(e=>`<div class="hist-ex">${e.name} <span>- ${e.sets.map(st=>st.weight>0?st.weight+'x'+st.reps:st.reps+' reps').join(', ')}</span></div>`).join('')} </div>`;
+}).join('');
+}
+
+function delSession(id){
+sessions=sessions.filter(s=>s.id!==id);
+try{localStorage.setItem('iq_sessions',JSON.stringify(sessions))}catch(e){}
+renderHistory();
+}
+
+function setT(s){pauseT();tTotal=s;tLeft=s;updT()}
+function setCustomT(){const v=parseInt(document.getElementById('t-custom').value);if(v>=5)setT(v)}
+function toggleT(){tRunning?pauseT():startT()}
+function startT(){
+if(tLeft<=0)tLeft=tTotal;
+tRunning=true;
+document.getElementById('t-toggle').innerHTML='<i class="ti ti-player-pause"></i> Pause';
+document.getElementById('t-status').textContent='resting...';
+tInterval=setInterval(()=>{
+tLeft--;updT();
+if(tLeft<=0){clearInterval(tInterval);tRunning=false;document.getElementById('t-toggle').innerHTML='<i class="ti ti-player-play"></i> Start';document.getElementById('t-status').textContent='rest done!'}
+},1000);
+}
+function pauseT(){clearInterval(tInterval);tRunning=false;document.getElementById('t-toggle').innerHTML='<i class="ti ti-player-play"></i> Start';document.getElementById('t-status').textContent='paused'}
+function resetT(){pauseT();tLeft=tTotal;updT();document.getElementById('t-status').textContent='ready'}
+function updT(){
+const m=Math.floor(tLeft/60),s=tLeft%60;
+document.getElementById('t-display').textContent=m+':'+String(s).padStart(2,'0');
+const pct=tTotal>0?tLeft/tTotal:0;
+document.getElementById('t-ring').style.strokeDashoffset=Math.round(553*(1-pct));
+}
+
+initDate();updT();renderDash();renderTemplates();
+
+if('serviceWorker' in navigator){
+window.addEventListener('load',()=>{
+navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+}
+</script>
+
+</body>
+</html>
